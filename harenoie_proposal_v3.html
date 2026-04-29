@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HARE no ie 事例ギャラリー</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a18;
+    --warm: #f5f0e8;
+    --accent: #8b6914;
+    --accent-light: #c8a84b;
+    --muted: #6b6558;
+    --border: #ddd8cc;
+    --white: #ffffff;
+    --tag-bg: #ede8de;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: var(--warm); color: var(--ink); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: var(--ink); color: var(--white);
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .logo { font-family: 'Noto Serif JP', serif; font-size: 16px; letter-spacing: 0.1em; }
+  .logo span { color: var(--accent-light); }
+  .mode-tabs { display: flex; gap: 6px; }
+  .mode-tab {
+    padding: 7px 16px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent; color: rgba(255,255,255,0.6);
+    font-size: 13px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; transition: all 0.2s;
+  }
+  .mode-tab.active { background: var(--accent); border-color: var(--accent); color: var(--white); }
+
+  /* FILTER AREA */
+  .filter-area {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 57px; z-index: 90;
+  }
+
+  /* 大タブ：テイスト／場所 */
+  .filter-main-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-main-tab {
+    flex: 1; padding: 12px;
+    text-align: center;
+    font-size: 14px; font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500; cursor: pointer;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    transition: all 0.18s;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .filter-main-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .filter-main-tab .tab-icon { font-size: 16px; margin-right: 6px; }
+
+  /* タグ一覧 */
+  .filter-tags-wrap { padding: 12px 20px 14px; }
+  .filter-row {
+    display: flex; flex-wrap: wrap; gap: 7px; align-items: center;
+  }
+  .filter-section-label {
+    font-size: 10px; letter-spacing: 0.1em; color: var(--muted);
+    text-transform: uppercase; width: 100%; margin-top: 8px; margin-bottom: 2px;
+  }
+  .filter-section-label:first-child { margin-top: 0; }
+  .filter-tag {
+    padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--white); color: var(--muted);
+    font-size: 12px; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .filter-tag:hover { border-color: var(--accent-light); color: var(--accent); }
+  .filter-tag.active { background: var(--accent); border-color: var(--accent); color: var(--white); font-weight: 500; }
+  .filter-tag.all-tag { font-weight: 500; }
+  .filter-clear {
+    font-size: 11px; color: var(--accent); cursor: pointer;
+    border: 1px solid var(--accent); padding: 3px 10px; border-radius: 10px;
+    display: none; margin-left: 4px;
+  }
+  .filter-clear.show { display: inline; }
+
+  /* LOADING */
+  .loading-bar { background: var(--white); padding: 40px; text-align: center; color: var(--muted); font-size: 14px; }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* GALLERY */
+  .gallery-wrap { padding: 20px 24px; }
+  .gallery-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .gallery-count { font-size: 12px; color: var(--muted); }
+  .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+
+  /* CARD */
+  .card {
+    background: var(--white); border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07); cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s; position: relative;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.13); }
+  .card-img { width: 100%; aspect-ratio: 4/3; background: #e8e2d8; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .card-img .no-img { font-size: 40px; opacity: 0.25; }
+  .card-body { padding: 12px 14px 14px; }
+  .card-title { font-family: 'Noto Serif JP', serif; font-size: 14px; font-weight: 600; margin-bottom: 8px; line-height: 1.5; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .card-tag-place { padding: 2px 8px; border-radius: 10px; background: #e8f4e8; color: #3a7a3a; font-size: 10px; font-weight: 500; }
+  .card-tag-taste { padding: 2px 8px; border-radius: 10px; background: var(--tag-bg); color: var(--accent); font-size: 10px; font-weight: 500; }
+  .card-actions { position: absolute; top: 8px; right: 8px; display: none; gap: 6px; }
+  .card:hover .card-actions { display: flex; }
+  .card-btn { width: 32px; height: 32px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; }
+  .btn-edit { background: rgba(255,255,255,0.9); }
+  .btn-delete { background: rgba(255,80,80,0.85); color: white; }
+
+  .empty { grid-column: 1/-1; text-align: center; padding: 80px 20px; color: var(--muted); }
+  .empty-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.3; }
+
+  /* FAB */
+  .fab {
+    position: fixed; bottom: 28px; right: 28px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--accent); color: var(--white); border: none;
+    font-size: 28px; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(139,105,20,0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; z-index: 200;
+  }
+  .fab:hover { background: var(--accent-light); transform: scale(1.08); }
+  .fab.hidden { display: none; }
+
+  /* TOAST */
+  .save-toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--white); padding: 10px 24px;
+    border-radius: 20px; font-size: 13px; z-index: 500;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .save-toast.show { opacity: 1; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(10,10,8,0.6);
+    z-index: 300; display: flex; align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(3px);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--white); border-radius: 16px; width: 100%; max-width: 560px;
+    padding: 28px; max-height: 90vh; overflow-y: auto;
+    transform: translateY(16px); transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-family: 'Noto Serif JP', serif; font-size: 18px; font-weight: 600; margin-bottom: 22px; }
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 11px; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 7px; text-transform: uppercase; }
+  .form-input {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: 'Noto Sans JP', sans-serif;
+    color: var(--ink); outline: none; transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+
+  .upload-area {
+    border: 2px dashed var(--border); border-radius: 10px; padding: 28px;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: var(--warm); position: relative;
+  }
+  .upload-area:hover { border-color: var(--accent-light); }
+  .upload-area.has-image { padding: 0; overflow: hidden; border-style: solid; }
+  .upload-area img { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; display: block; }
+  .upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { font-size: 32px; opacity: 0.3; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: var(--muted); }
+
+  /* タグ入力 - 2セクション */
+  .tag-section { margin-bottom: 14px; }
+  .tag-section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    margin-bottom: 8px; padding: 4px 10px; border-radius: 6px;
+    display: inline-block;
+  }
+  .tag-section-title.place { background: #e8f4e8; color: #3a7a3a; }
+  .tag-section-title.taste { background: var(--tag-bg); color: var(--accent); }
+  .tag-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .tag-input-row .form-input { flex: 1; }
+  .btn-add-tag { padding: 0 16px; background: var(--accent); color: var(--white); border: none; border-radius: 8px; font-size: 13px; font-family: 'Noto Sans JP', sans-serif; cursor: pointer; white-space: nowrap; }
+  .selected-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 28px; }
+  .selected-tag { padding: 4px 10px 4px 12px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+  .selected-tag.place { background: #e8f4e8; color: #3a7a3a; }
+  .selected-tag.taste { background: var(--tag-bg); color: var(--accent); }
+  .selected-tag button { background: none; border: none; cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+  .selected-tag.place button { color: #3a7a3a; }
+  .selected-tag.taste button { color: var(--accent); }
+  .suggest-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .suggest-tag {
+    padding: 3px 10px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 11px;
+    cursor: pointer; background: var(--white); color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s;
+  }
+  .suggest-tag.used-place { background: #e8f4e8; color: #3a7a3a; border-color: #a8d4a8; }
+  .suggest-tag.used-taste { background: var(--tag-bg); color: var(--accent); border-color: var(--accent-light); }
+
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+  .btn-cancel { padding: 10px 22px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--white); color: var(--muted); font-family: 'Noto Sans JP', sans-serif; font-size: 14px; cursor: pointer; }
+  .btn-save { padding: 10px 26px; background: var(--accent); color: var(--white); border: none; border-radius: 8px; font-family: 'Noto Sans JP', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* LIGHTBOX */
+  .lightbox {
+    position: fixed; inset: 0; background: rgba(8,8,6,0.93);
+    z-index: 400; display: flex; align-items: center; justify-content: center; flex-direction: column;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s; padding: 20px;
+  }
+  .lightbox.open { opacity: 1; pointer-events: all; }
+  .lightbox img { max-width: 90vw; max-height: 70vh; object-fit: contain; border-radius: 6px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+  .lightbox-placeholder { width: min(80vw,560px); height: 340px; background: #2a2a26; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.25); }
+  .lightbox-placeholder span { font-size: 60px; margin-bottom: 12px; }
+  .lightbox-info { margin-top: 18px; text-align: center; max-width: 600px; }
+  .lightbox-title { font-family: 'Noto Serif JP', serif; font-size: 18px; color: var(--white); margin-bottom: 10px; }
+  .lightbox-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .lightbox-tag-place { padding: 4px 12px; border-radius: 12px; background: rgba(60,120,60,0.3); border: 1px solid rgba(100,180,100,0.4); color: #a8e4a8; font-size: 12px; }
+  .lightbox-tag-taste { padding: 4px 12px; border-radius: 12px; background: rgba(200,168,75,0.2); border: 1px solid rgba(200,168,75,0.4); color: var(--accent-light); font-size: 12px; }
+  .lightbox-close { position: fixed; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.12); border: none; color: var(--white); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .lightbox-nav { position: fixed; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: var(--white); font-size: 28px; width: 52px; height: 52px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .lightbox-nav:hover { background: rgba(255,255,255,0.22); }
+  .lightbox-prev { left: 16px; }
+  .lightbox-next { right: 16px; }
+
+  @media (max-width: 600px) {
+    .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    header { padding: 10px 14px; }
+    .gallery-wrap { padding: 14px; }
+    .filter-tags-wrap { padding: 10px 14px 12px; }
+    .mode-tab { padding: 6px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">HARE no ie <span>事例ギャラリー</span></div>
+  <div class="mode-tabs" style="display:none">
+    <button class="mode-tab active" onclick="setMode('proposal')">提案</button>
+    <button class="mode-tab" onclick="setMode('manage')">管理</button>
+  </div>
+</header>
+
+<div class="filter-area">
+  <!-- 大タブ -->
+  <div class="filter-main-tabs">
+    <button class="filter-main-tab active" onclick="setFilterTab('all')">
+      <span class="tab-icon">🏠</span>すべて
+    </button>
+    <button class="filter-main-tab" onclick="setFilterTab('taste')">
+      <span class="tab-icon">✨</span>テイストで探す
+    </button>
+    <button class="filter-main-tab" onclick="setFilterTab('place')">
+      <span class="tab-icon">📍</span>場所で探す
+    </button>
+  </div>
+
+  <!-- タグ一覧 -->
+  <div class="filter-tags-wrap" id="filterTagsWrap">
+    <div class="filter-row" id="filterTags"></div>
+  </div>
+</div>
+
+<div class="gallery-wrap">
+  <div class="gallery-header">
+    <div class="gallery-count" id="galleryCount"></div>
+    <span class="filter-clear" id="filterClearBtn" onclick="clearFilters()">絞り込みをクリア</span>
+  </div>
+  <div class="gallery-grid" id="galleryGrid">
+    <div class="loading-bar" style="grid-column:1/-1">
+      <div class="spinner"></div>
+      データを読み込み中...
+    </div>
+  </div>
+</div>
+
+<button class="fab hidden" id="fab" style="display:none!important">＋</button>
+<div class="save-toast" id="saveToast"></div>
+
+<!-- 登録・編集モーダル -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">事例写真を追加</div>
+
+    <div class="form-group">
+      <label class="form-label">写真</label>
+      <div class="upload-area" id="uploadArea">
+        <input type="file" accept="image/*" onchange="handleImageUpload(event)">
+        <div id="uploadPlaceholder">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">タップして写真を選択</div>
+        </div>
+        <img id="previewImg" style="display:none">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">タイトル（例：家事ラク動線のキッチン_206005）</label>
+      <input type="text" class="form-input" id="inputTitle" placeholder="タイトル_工事番号">
+    </div>
+
+    <!-- 場所タグ -->
+    <div class="form-group">
+      <label class="form-label">タグを設定</label>
+
+      <div class="tag-section">
+        <span class="tag-section-title place">📍 場所タグ</span>
+        <div class="tag-input-row">
+          <input type="text" class="form-input" id="placeTagInput" placeholder="#キッチン" onkeydown="handleTagKey(event,'place')">
+          <button class="btn-add-tag" onclick="addTagFromInput('place')">追加</button>
+        </div>
+        <div class="selected-tags" id="selectedPlaceTags"></div>
+        <div class="suggest-tags" id="suggestPlaceTags"></div>
+      </div>
+
+      <div class="tag-section" style="margin-top:14px">
+        <span class="tag-section-title taste">✨ テイストタグ</span>
+        <div class="tag-input-row">
+          <input type="text" class="form-input" id="tasteTagInput" placeholder="#南欧風" onkeydown="handleTagKey(event,'taste')">
+          <button class="btn-add-tag" onclick="addTagFromInput('taste')">追加</button>
+        </div>
+        <div class="selected-tags" id="selectedTasteTags"></div>
+        <div class="suggest-tags" id="suggestTasteTags"></div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-save" id="btnSave" onclick="savePhoto()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ライトボックス -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-nav lightbox-prev" onclick="navLightbox(-1,event)">‹</button>
+  <button class="lightbox-nav lightbox-next" onclick="navLightbox(1,event)">›</button>
+  <div id="lightboxContent"></div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwPayGEBxNoxfCr9HQ03TVceWPars5JdOgC4UNC48X0EGJ8tCWjyUYQ3M3z_8Sa1AyX3w/exec';
+
+// ===== タグ定義 =====
+const PLACE_TAGS = ['#外観','#外構','#玄関','#LDK','#キッチン','#ダイニング','#リビング','#洗面台','#トイレ','#風呂','#浴室','#寄り屋・階段','#居室','#子供部屋','#収納'];
+const TASTE_TAGS = ['#南欧風','#モダン','#ナチュラル','#かわいい','#モノトーン','#和風','#シンプル','#塗り壁','#サイディング','#ガルバ','#タイル','#無垢床','#アイランドキッチン','#パントリー','#吹き抜け'];
+
+// ===== STATE =====
+let mode = 'proposal';
+let photos = [];
+let filterTab = 'all'; // 'all' | 'taste' | 'place'
+let activeFilters = [];
+let editingId = null;
+let currentImgData = null;
+let selectedPlaceTags = [];
+let selectedTasteTags = [];
+let lightboxIndex = -1;
+let currentFilteredPhotos = [];
+
+// ===== API =====
+async function loadPhotos() {
+  try {
+    const res = await fetch(GAS_URL);
+    const data = await res.json();
+    photos = data.map(r => ({
+      id: String(r.id),
+      title: r.title || '',
+      tags: r.tags ? r.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      img: r.imageUrl || null,
+      createdAt: r.createdAt || ''
+    }));
+    renderAll();
+  } catch(e) {
+    document.getElementById('galleryGrid').innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div>データの読み込みに失敗しました</div></div>`;
+  }
+}
+
+async function apiPost(payload) {
+  const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+  return await res.json();
+}
+
+// ===== MODE =====
+function setMode(m) { return;
+}
+function _setMode_unused(m) {
+  mode = m;
+  document.querySelectorAll('.mode-tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0&&m==='proposal')||(i===1&&m==='manage'));
+  });
+  document.getElementById('fab').classList.toggle('hidden', m!=='manage');
+  renderGrid();
+}
+
+// ===== FILTER TAB =====
+function setFilterTab(tab) {
+  filterTab = tab;
+  activeFilters = [];
+  document.querySelectorAll('.filter-main-tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0&&tab==='all')||(i===1&&tab==='taste')||(i===2&&tab==='place'));
+  });
+  renderFilterTags();
+  renderGrid();
+}
+
+function renderAll() {
+  renderFilterTags();
+  renderGrid();
+}
+
+function getTagType(tag) {
+  if (PLACE_TAGS.includes(tag)) return 'place';
+  if (TASTE_TAGS.includes(tag)) return 'taste';
+  // 既存データのタグを判定
+  return 'taste';
+}
+
+function renderFilterTags() {
+  const bar = document.getElementById('filterTags');
+
+  const allUsedTags = new Set();
+  photos.forEach(p => p.tags.forEach(t => allUsedTags.add(t)));
+
+  function buildTagSection(label, baseTags, type) {
+    const customTags = [...allUsedTags].filter(t => !baseTags.includes(t) && getTagType(t) === type);
+    const all = [...baseTags, ...customTags];
+    return `<div class="filter-section-label">${label}</div>` +
+      all.map(t => `<button class="filter-tag ${activeFilters.includes(t)?'active':''}" onclick="toggleFilter('${esc(t)}')">${esc(t)}</button>`).join('');
+  }
+
+  let html = '';
+  if (filterTab === 'all') {
+    html += buildTagSection('📍 場所', PLACE_TAGS, 'place');
+    html += `<div style="height:10px"></div>`;
+    html += buildTagSection('✨ テイスト', TASTE_TAGS, 'taste');
+  } else if (filterTab === 'place') {
+    html += buildTagSection('📍 場所', PLACE_TAGS, 'place');
+  } else {
+    html += buildTagSection('✨ テイスト', TASTE_TAGS, 'taste');
+  }
+
+  bar.innerHTML = html;
+  document.getElementById('filterClearBtn').classList.toggle('show', activeFilters.length > 0);
+}
+
+function toggleFilter(tag) {
+  if (activeFilters.includes(tag)) {
+    activeFilters = activeFilters.filter(t => t !== tag);
+  } else {
+    activeFilters.push(tag);
+  }
+  renderFilterTags();
+  renderGrid();
+}
+
+function clearFilters() {
+  activeFilters = [];
+  renderFilterTags();
+  renderGrid();
+}
+
+// ===== GRID =====
+function renderGrid() {
+  let filtered = photos;
+  if (activeFilters.length > 0) {
+    filtered = photos.filter(p => activeFilters.every(f => p.tags.includes(f)));
+  } else if (filterTab === 'taste') {
+    filtered = photos.filter(p => p.tags.some(t => TASTE_TAGS.includes(t) || getTagType(t)==='taste'));
+  } else if (filterTab === 'place') {
+    filtered = photos.filter(p => p.tags.some(t => PLACE_TAGS.includes(t)));
+  }
+  currentFilteredPhotos = filtered;
+  document.getElementById('galleryCount').textContent = `${filtered.length}件の事例`;
+
+  const grid = document.getElementById('galleryGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">🏠</div><div>該当する事例がありません</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((p, idx) => {
+    const placeTags = p.tags.filter(t => PLACE_TAGS.includes(t));
+    const tasteTags = p.tags.filter(t => !PLACE_TAGS.includes(t));
+    return `
+    <div class="card" onclick="openLightbox(${idx})">
+      <div class="card-img">
+        ${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.title)}">` : `<div class="no-img">🏠</div>`}
+      </div>
+      ${mode==='manage' ? `<div class="card-actions">
+        <button class="card-btn btn-edit" onclick="editPhoto('${esc(p.id)}',event)">✎</button>
+        <button class="card-btn btn-delete" onclick="deletePhoto('${esc(p.id)}',event)">✕</button>
+      </div>` : ''}
+      <div class="card-body">
+        <div class="card-title">${esc(p.title)}</div>
+        <div class="card-tags">
+          ${placeTags.map(t=>`<span class="card-tag-place">${esc(t)}</span>`).join('')}
+          ${tasteTags.map(t=>`<span class="card-tag-taste">${esc(t)}</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== LIGHTBOX =====
+function openLightbox(idx) {
+  lightboxIndex = idx;
+  showLightboxItem();
+  document.getElementById('lightbox').classList.add('open');
+}
+function showLightboxItem() {
+  const p = currentFilteredPhotos[lightboxIndex];
+  if (!p) return;
+  const placeTags = p.tags.filter(t => PLACE_TAGS.includes(t));
+  const tasteTags = p.tags.filter(t => !PLACE_TAGS.includes(t));
+  document.getElementById('lightboxContent').innerHTML = `
+    ${p.img ? `<img src="${esc(p.img)}" onclick="event.stopPropagation()">` : `<div class="lightbox-placeholder"><span>🏠</span><div>写真未登録</div></div>`}
+    <div class="lightbox-info">
+      <div class="lightbox-title">${esc(p.title)}</div>
+      <div class="lightbox-tags">
+        ${placeTags.map(t=>`<span class="lightbox-tag-place">${esc(t)}</span>`).join('')}
+        ${tasteTags.map(t=>`<span class="lightbox-tag-taste">${esc(t)}</span>`).join('')}
+      </div>
+    </div>`;
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+function navLightbox(dir, e) {
+  e.stopPropagation();
+  lightboxIndex = (lightboxIndex + dir + currentFilteredPhotos.length) % currentFilteredPhotos.length;
+  showLightboxItem();
+}
+
+// ===== MODAL =====
+function openAddModal() {
+  editingId = null; currentImgData = null;
+  selectedPlaceTags = []; selectedTasteTags = [];
+  document.getElementById('modalTitle').textContent = '事例写真を追加';
+  document.getElementById('inputTitle').value = '';
+  document.getElementById('placeTagInput').value = '';
+  document.getElementById('tasteTagInput').value = '';
+  document.getElementById('previewImg').style.display = 'none';
+  document.getElementById('uploadPlaceholder').style.display = 'block';
+  document.getElementById('uploadArea').classList.remove('has-image');
+  renderModalTags();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function editPhoto(id, e) {
+  e.stopPropagation();
+  const p = photos.find(x => x.id === id);
+  if (!p) return;
+  editingId = id; currentImgData = p.img || null;
+  selectedPlaceTags = p.tags.filter(t => PLACE_TAGS.includes(t));
+  selectedTasteTags = p.tags.filter(t => !PLACE_TAGS.includes(t));
+  document.getElementById('modalTitle').textContent = '事例写真を編集';
+  document.getElementById('inputTitle').value = p.title;
+  document.getElementById('placeTagInput').value = '';
+  document.getElementById('tasteTagInput').value = '';
+  if (p.img) {
+    document.getElementById('previewImg').src = p.img;
+    document.getElementById('previewImg').style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('uploadArea').classList.add('has-image');
+  } else {
+    document.getElementById('previewImg').style.display = 'none';
+    document.getElementById('uploadPlaceholder').style.display = 'block';
+    document.getElementById('uploadArea').classList.remove('has-image');
+  }
+  renderModalTags();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target===document.getElementById('modalOverlay')) closeModal(); }
+
+function handleImageUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentImgData = ev.target.result;
+    document.getElementById('previewImg').src = currentImgData;
+    document.getElementById('previewImg').style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('uploadArea').classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+}
+
+function addTagFromInput(type) {
+  const inputId = type === 'place' ? 'placeTagInput' : 'tasteTagInput';
+  let val = document.getElementById(inputId).value.trim();
+  if (!val) return;
+  if (!val.startsWith('#')) val = '#' + val;
+  if (type === 'place') {
+    if (!selectedPlaceTags.includes(val)) selectedPlaceTags.push(val);
+  } else {
+    if (!selectedTasteTags.includes(val)) selectedTasteTags.push(val);
+  }
+  document.getElementById(inputId).value = '';
+  renderModalTags();
+}
+
+function handleTagKey(e, type) { if (e.key==='Enter') addTagFromInput(type); }
+
+function removeTag(tag, type) {
+  if (type==='place') selectedPlaceTags = selectedPlaceTags.filter(t=>t!==tag);
+  else selectedTasteTags = selectedTasteTags.filter(t=>t!==tag);
+  renderModalTags();
+}
+
+function toggleModalTag(tag, type) {
+  if (type==='place') {
+    if (selectedPlaceTags.includes(tag)) selectedPlaceTags = selectedPlaceTags.filter(t=>t!==tag);
+    else selectedPlaceTags.push(tag);
+  } else {
+    if (selectedTasteTags.includes(tag)) selectedTasteTags = selectedTasteTags.filter(t=>t!==tag);
+    else selectedTasteTags.push(tag);
+  }
+  renderModalTags();
+}
+
+function renderModalTags() {
+  // 選択済み
+  document.getElementById('selectedPlaceTags').innerHTML = selectedPlaceTags.map(t =>
+    `<span class="selected-tag place">${esc(t)}<button onclick="removeTag('${esc(t)}','place')">×</button></span>`).join('');
+  document.getElementById('selectedTasteTags').innerHTML = selectedTasteTags.map(t =>
+    `<span class="selected-tag taste">${esc(t)}<button onclick="removeTag('${esc(t)}','taste')">×</button></span>`).join('');
+
+  // 候補
+  document.getElementById('suggestPlaceTags').innerHTML = PLACE_TAGS.map(t =>
+    `<button class="suggest-tag ${selectedPlaceTags.includes(t)?'used-place':''}" onclick="toggleModalTag('${esc(t)}','place')">${esc(t)}</button>`).join('');
+  document.getElementById('suggestTasteTags').innerHTML = TASTE_TAGS.map(t =>
+    `<button class="suggest-tag ${selectedTasteTags.includes(t)?'used-taste':''}" onclick="toggleModalTag('${esc(t)}','taste')">${esc(t)}</button>`).join('');
+}
+
+async function savePhoto() {
+  const title = document.getElementById('inputTitle').value.trim() || '無題';
+  const allTags = [...selectedPlaceTags, ...selectedTasteTags];
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = '保存中...';
+  showToast('保存中...');
+  try {
+    if (editingId !== null) {
+      const p = photos.find(x => x.id === editingId);
+      const payload = { action:'update', id: editingId, title, tags: allTags.join(','), imageUrl: currentImgData || (p?p.img:''), createdAt: p?p.createdAt:new Date().toISOString() };
+      await apiPost(payload);
+      if (p) { p.title=title; p.tags=allTags; if(currentImgData) p.img=currentImgData; }
+    } else {
+      const newId = String(Date.now());
+      const payload = { action:'add', id:newId, title, tags:allTags.join(','), imageUrl:currentImgData||'', createdAt:new Date().toISOString() };
+      await apiPost(payload);
+      photos.unshift({ id:newId, title, tags:allTags, img:currentImgData, createdAt:payload.createdAt });
+    }
+    showToast('保存しました ✓');
+    closeModal();
+    renderAll();
+  } catch(e) { showToast('保存に失敗しました'); }
+  btn.disabled=false; btn.textContent='保存';
+}
+
+async function deletePhoto(id, e) {
+  e.stopPropagation();
+  if (!confirm('この事例写真を削除しますか？')) return;
+  showToast('削除中...');
+  try {
+    await apiPost({ action:'delete', id });
+    photos = photos.filter(x=>x.id!==id);
+    showToast('削除しました');
+    renderAll();
+  } catch(e) { showToast('削除に失敗しました'); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('saveToast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lightbox').classList.contains('open')) {
+    if (e.key==='Escape') closeLightbox();
+    if (e.key==='ArrowRight') navLightbox(1,{stopPropagation:()=>{}});
+    if (e.key==='ArrowLeft') navLightbox(-1,{stopPropagation:()=>{}});
+  }
+});
+
+loadPhotos();
+</script>
+</body>
+</html>
