@@ -370,6 +370,8 @@ let filterTab = 'all'; // 'all' | 'taste' | 'place'
 let activeFilters = [];
 let editingId = null;
 let currentImgData = null;
+let currentImgUrl = null;
+let currentImageFile = null;
 let selectedPlaceTags = [];
 let selectedTasteTags = [];
 let lightboxIndex = -1;
@@ -547,7 +549,7 @@ function navLightbox(dir, e) {
 
 // ===== MODAL =====
 function openAddModal() {
-  editingId = null; currentImgData = null;
+  editingId = null; currentImgData = null; currentImgUrl = null; currentImageFile = null;
   selectedPlaceTags = []; selectedTasteTags = [];
   document.getElementById('modalTitle').textContent = '事例写真を追加';
   document.getElementById('inputTitle').value = '';
@@ -564,7 +566,7 @@ function editPhoto(id, e) {
   e.stopPropagation();
   const p = photos.find(x => x.id === id);
   if (!p) return;
-  editingId = id; currentImgData = p.img || null;
+  editingId = id; currentImgData = p.img || null; currentImgUrl = p.img || null; currentImageFile = null;
   selectedPlaceTags = p.tags.filter(t => PLACE_TAGS.includes(t));
   selectedTasteTags = p.tags.filter(t => !PLACE_TAGS.includes(t));
   document.getElementById('modalTitle').textContent = '事例写真を編集';
@@ -590,6 +592,7 @@ function handleOverlayClick(e) { if (e.target===document.getElementById('modalOv
 
 function handleImageUpload(e) {
   const file = e.target.files[0]; if (!file) return;
+  currentImageFile = file;
   const reader = new FileReader();
   reader.onload = ev => {
     currentImgData = ev.target.result;
@@ -654,17 +657,33 @@ async function savePhoto() {
   const btn = document.getElementById('btnSave');
   btn.disabled = true; btn.textContent = '保存中...';
   showToast('保存中...');
+
   try {
+    // 新しい画像がある場合はGoogleドライブにアップロード
+    let imageUrl = currentImgUrl || '';
+    if (currentImgData && currentImgData.startsWith('data:')) {
+      showToast('写真をアップロード中...');
+      const fileName = title.replace(/[^a-zA-Z0-9ぁ-んァ-ヶ一-龠]/g, '_') + '_' + Date.now();
+      const uploadRes = await apiPost({
+        action: 'uploadImage',
+        imageData: currentImgData,
+        fileName: fileName
+      });
+      if (uploadRes.imageUrl) {
+        imageUrl = uploadRes.imageUrl;
+      }
+    }
+
     if (editingId !== null) {
       const p = photos.find(x => x.id === editingId);
-      const payload = { action:'update', id: editingId, title, tags: allTags.join(','), imageUrl: currentImgData || (p?p.img:''), createdAt: p?p.createdAt:new Date().toISOString() };
+      const payload = { action:'update', id: editingId, title, tags: allTags.join(','), imageUrl: imageUrl || (p?p.img:''), createdAt: p?p.createdAt:new Date().toISOString() };
       await apiPost(payload);
-      if (p) { p.title=title; p.tags=allTags; if(currentImgData) p.img=currentImgData; }
+      if (p) { p.title=title; p.tags=allTags; p.img=imageUrl||p.img; }
     } else {
       const newId = String(Date.now());
-      const payload = { action:'add', id:newId, title, tags:allTags.join(','), imageUrl:currentImgData||'', createdAt:new Date().toISOString() };
+      const payload = { action:'add', id:newId, title, tags:allTags.join(','), imageUrl:imageUrl, createdAt:new Date().toISOString() };
       await apiPost(payload);
-      photos.unshift({ id:newId, title, tags:allTags, img:currentImgData, createdAt:payload.createdAt });
+      photos.unshift({ id:newId, title, tags:allTags, img:imageUrl, createdAt:payload.createdAt });
     }
     showToast('保存しました ✓');
     closeModal();
